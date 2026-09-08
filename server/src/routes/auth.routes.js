@@ -124,6 +124,95 @@ router.post('/google', async (req, res) => {
   }
 });
 
+// Real User Registration (Student & Counselor)
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, role = 'student', student_code, class_name, department, phone } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'กรุณากรอกชื่อ-นามสกุล, อีเมล และรหัสผ่านให้ครบถ้วน' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const db = await getDb();
+
+    // Check if email already exists
+    const existingUser = db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+    if (existingUser) {
+      return res.status(409).json({ error: 'อีเมลนี้ถูกลงทะเบียนในระบบแล้ว กรุณาเข้าสู่ระบบ' });
+    }
+
+    // Hash password
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
+    const userRes = db.prepare(`
+      INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)
+    `).run(name.trim(), cleanEmail, hashedPassword, role);
+
+    const userId = userRes.lastInsertRowid;
+    let studentId = null;
+    let finalStudentCode = null;
+    let counselorId = null;
+
+    if (role === 'student') {
+      // Auto-assign or format student code
+      const countRes = db.prepare('SELECT COUNT(*) as count FROM students').get();
+      let code = student_code ? (student_code.startsWith('#') ? student_code : `#${student_code}`) : `#${String((countRes?.count || 0) + 1).padStart(3, '0')}`;
+      
+      const existingCode = db.prepare('SELECT id FROM students WHERE student_code = ?').get(code);
+      if (existingCode) {
+        code = `${code}-${Math.floor(Math.random() * 1000)}`;
+      }
+      finalStudentCode = code;
+
+      const stRes = db.prepare(`
+        INSERT INTO students (user_id, student_code, class_name, status)
+        VALUES (?, ?, ?, 'ACTIVE')
+      `).run(userId, finalStudentCode, class_name || 'M.5/1');
+      studentId = stRes.lastInsertRowid;
+
+      // Initialize Tree Progress
+      db.prepare(`
+        INSERT INTO tree_progress (student_id, growth_level, consecutive_checkins, total_checkins, longest_streak)
+        VALUES (?, 0, 0, 0, 0)
+      `).run(studentId);
+    } else if (role === 'counselor') {
+      const coRes = db.prepare(`
+        INSERT INTO counselors (user_id, name, department, phone)
+        VALUES (?, ?, ?, ?)
+      `).run(userId, name.trim(), department || 'งานแนะแนวและจิตวิทยา', phone || '');
+      counselorId = coRes.lastInsertRowid;
+    }
+
+    const payload = {
+      id: userId,
+      email: cleanEmail,
+      name: name.trim(),
+      role,
+      student_id: studentId,
+      student_code: finalStudentCode,
+      class_name: class_name || (role === 'student' ? 'M.5/1' : null),
+      counselor_id: counselorId
+    };
+
+    const token = generateToken(payload);
+
+    res.status(201).json({
+      message: 'ลงทะเบียนสำเร็จ ยินดีต้อนรับสู่ MindNote Student',
+      token,
+      user: payload
+    });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการลงทะเบียน', details: err.message });
+  }
+});
+
 // Login
 router.post('/login', async (req, res) => {
   try {

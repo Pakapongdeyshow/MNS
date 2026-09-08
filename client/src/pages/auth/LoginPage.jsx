@@ -11,28 +11,114 @@ import {
   ShieldCheck, 
   HeartHandshake, 
   PhoneCall, 
-  HelpCircle,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  GraduationCap,
+  UserCheck,
+  Building,
+  Phone,
+  BookOpen
 } from 'lucide-react';
 
 export function LoginPage({ onOpenDemoModal }) {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
+  
+  // Auth Mode: 'login' | 'register'
+  const [authMode, setAuthMode] = useState('login');
+
+  // Login form state
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+
+  // Register form state
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regRole, setRegRole] = useState('student');
+  const [regStudentCode, setRegStudentCode] = useState('');
+  const [regClass, setRegClass] = useState('M.5/1');
+  const [regDepartment, setRegDepartment] = useState('งานแนะแนวและจิตวิทยาการศึกษา');
+  const [regPhone, setRegPhone] = useState('');
+
+  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
+
+  // Google Modal state
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [googleEmail, setGoogleEmail] = useState('');
   const [googleName, setGoogleName] = useState('');
+
+  // Handle Login Submit
+  async function handleLoginSubmit(e) {
+    e.preventDefault();
+    if (!identifier.trim() || !password) {
+      setError('กรุณากรอกชื่อผู้ใช้/อีเมล และรหัสผ่าน');
+      return;
+    }
+
+    setError(null);
+    setSuccessMsg(null);
+    setLoading(true);
+    try {
+      await login(identifier.trim(), password);
+    } catch (err) {
+      setError(err.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle Register Submit
+  async function handleRegisterSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    setSuccessMsg(null);
+
+    if (!regName.trim() || !regEmail.trim() || !regPassword) {
+      setError('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      setError('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      setError('รหัสผ่านยืนยันไม่ตรงกัน');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        name: regName.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+        role: regRole,
+        student_code: regRole === 'student' ? regStudentCode.trim() : null,
+        class_name: regRole === 'student' ? regClass : null,
+        department: regRole === 'counselor' ? regDepartment.trim() : null,
+        phone: regRole === 'counselor' ? regPhone.trim() : null,
+      };
+
+      await register(payload);
+    } catch (err) {
+      setError(err.message || 'การลงทะเบียนล้มเหลว กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-    // If real Google Client ID is configured and GIS is available in window
     if (googleClientId && window.google?.accounts?.id) {
       try {
         window.google.accounts.id.initialize({
@@ -55,7 +141,6 @@ export function LoginPage({ onOpenDemoModal }) {
       }
     }
 
-    // Otherwise show elegant Google Sign-In helper modal
     setShowGoogleModal(true);
   };
 
@@ -79,33 +164,15 @@ export function LoginPage({ onOpenDemoModal }) {
     }
   };
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!identifier.trim() || !password) {
-      setError('กรุณากรอกชื่อผู้ใช้/อีเมล และรหัสผ่าน');
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
-    try {
-      await login(identifier.trim(), password);
-    } catch (err) {
-      setError(err.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-950 flex flex-col justify-between text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 flex flex-col justify-between text-white relative overflow-hidden">
       {/* Ambient background glow elements */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 -right-40 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 -right-40 w-96 h-96 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Bar / Branding Header */}
-      <header className="px-6 py-6 max-w-7xl mx-auto w-full flex items-center justify-between relative z-10">
+      <header className="px-6 py-5 max-w-7xl mx-auto w-full flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-400 to-teal-300 p-0.5 shadow-lg shadow-emerald-500/30 flex items-center justify-center">
             <div className="w-full h-full bg-slate-900/80 rounded-[14px] flex items-center justify-center backdrop-blur-sm">
@@ -117,42 +184,42 @@ export function LoginPage({ onOpenDemoModal }) {
               MindNote Student
             </h1>
             <p className="text-xs text-emerald-300/80 font-medium">
-              ระบบดูแลและให้คำปรึกษาสุขภาพจิตนักเรียน
+              ระบบดูแลและให้คำปรึกษาสุขภาพจิตนักเรียน (Production Ready)
             </p>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10 flex-1">
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10 flex-1">
         
-        {/* Left Column: Hero & Psychological Support Intro */}
+        {/* Left Column: Hero & Value Propositions */}
         <div className="lg:col-span-6 space-y-6 text-left">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-medium">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>พื้นที่ปลอดภัยและเป็นมิตรสำหรับเยาวชน</span>
+            <span>ระบบฐานข้อมูลจริงระดับมาตรฐานสถานศึกษา</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            เติบโตอย่างมั่นคง <br />
+            พื้นที่ปลอดภัย <br />
             <span className="bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent">
-              ดูแลใจไปด้วยกันในทุกวัน
+              ดูแลสุขภาพใจในทุกย่างก้าว
             </span>
           </h2>
 
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg">
-            บันทึกความรู้สึก รดน้ำต้นไม้แห่งจิตใจใน Mind Garden และรับการดูแลอย่างเข้าใจจากครูแนะแนวและนักจิตวิทยาโรงเรียน
+            บันทึกความรู้สึก รดน้ำต้นไม้ใน Mind Garden ปรึกษาครูแนะแนวและนักจิตวิทยาโรงเรียนอย่างเป็นส่วนตัวและปลอดภัยตามมาตรฐาน PDPA
           </p>
 
           {/* Key Value Points */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-start gap-3">
               <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 mt-0.5">
                 <HeartHandshake className="w-4 h-4" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-white">ความลับปลอดภัย 100%</h4>
-                <p className="text-xs text-slate-400 mt-0.5">ข้อมูลการปรึกษาถูกเข้ารหัสและปกป้องอย่างเคร่งครัด</p>
+                <p className="text-xs text-slate-400 mt-0.5">รหัสผ่านถูกเข้ารหัสด้วย Bcrypt และป้องกันการเข้าถึงด้วย RBAC</p>
               </div>
             </div>
 
@@ -162,7 +229,7 @@ export function LoginPage({ onOpenDemoModal }) {
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-white">จิตวิทยาเชิงบวก</h4>
-                <p className="text-xs text-slate-400 mt-0.5">เสริมพลังใจด้วย Mind Garden ไม่มีการลงโทษหรือลดแต้ม</p>
+                <p className="text-xs text-slate-400 mt-0.5">เสริมพลังใจด้วย Mind Garden ต้นไม้ไม่เหี่ยวเฉาหรือถูกหักคะแนน</p>
               </div>
             </div>
           </div>
@@ -180,122 +247,324 @@ export function LoginPage({ onOpenDemoModal }) {
             </div>
             <a 
               href="tel:1323" 
-              className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-lg shadow-rose-500/30 transition flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-lg shadow-rose-500/30 transition flex items-center gap-1.5"
             >
               <span>1323</span>
             </a>
           </div>
         </div>
 
-        {/* Right Column: Modern Glassmorphic Login Form */}
+        {/* Right Column: Glassmorphic Auth Card (Login & Register Tabs) */}
         <div className="lg:col-span-6 flex justify-center">
-          <div className="w-full max-w-md bg-slate-900/85 backdrop-blur-xl border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/50 text-left relative">
+          <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/60 text-left relative">
             
-            {/* Form Header */}
-            <div className="mb-6">
-              <h3 className="text-2xl font-bold text-white">เข้าสู่ระบบ</h3>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                กรุณากรอกรหัสนักเรียน หรืออีเมลโรงเรียนเพื่อเริ่มต้นใช้งาน
-              </p>
+            {/* Tab Switcher: เข้าสู่ระบบ vs สมัครสมาชิก */}
+            <div className="flex p-1 rounded-2xl bg-white/5 border border-white/10 mb-6">
+              <button
+                type="button"
+                onClick={() => { setAuthMode('login'); setError(null); }}
+                className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  authMode === 'login'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                เข้าสู่ระบบ
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthMode('register'); setError(null); }}
+                className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  authMode === 'register'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                ลงทะเบียนบัญชีใหม่
+              </button>
             </div>
 
             {/* Error Notification */}
             {error && (
-              <div className="mb-5 p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5 animate-in fade-in duration-200">
+              <div className="mb-4 p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Identifier (Email / Student Code / Username) */}
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  รหัสนักเรียน หรือ อีเมลโรงเรียน
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="text"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="เช่น #001 หรือ student1@school.ac.th"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/15 focus:border-emerald-400 focus:bg-white/10 rounded-2xl text-sm text-white placeholder-slate-500 outline-none transition duration-200"
-                    autoFocus
-                    required
-                  />
-                </div>
+            {/* Success Notification */}
+            {successMsg && (
+              <div className="mb-4 p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>{successMsg}</span>
               </div>
+            )}
 
-              {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-slate-300">
-                    รหัสผ่าน
+            {/* MODE 1: LOGIN FORM */}
+            {authMode === 'login' && (
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    รหัสนักเรียน หรือ อีเมลโรงเรียน
                   </label>
-                  <span className="text-[11px] text-emerald-300/80 hover:text-emerald-200 cursor-pointer">
-                    ลืมรหัสผ่าน?
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="เช่น #001 หรือ student1@school.ac.th"
+                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/15 focus:border-emerald-400 focus:bg-white/10 rounded-2xl text-sm text-white placeholder-slate-500 outline-none transition"
+                      autoFocus
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-medium text-slate-300">
+                      รหัสผ่าน
+                    </label>
+                    <span className="text-[11px] text-emerald-300/80 hover:text-emerald-200 cursor-pointer">
+                      ลืมรหัสผ่าน?
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="กรอกรหัสผ่านของคุณ"
+                      className="w-full pl-10 pr-11 py-3 bg-white/5 border border-white/15 focus:border-emerald-400 focus:bg-white/10 rounded-2xl text-sm text-white placeholder-slate-500 outline-none transition"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white transition"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-0.5">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded bg-white/10 border-white/20 text-emerald-500 focus:ring-emerald-400 cursor-pointer"
+                    />
+                    <span>จดจำการเข้าสู่ระบบ</span>
+                  </label>
+                  <span className="text-slate-500 text-[11px]">
+                    บัญชีมาตรฐานสถานศึกษา
                   </span>
                 </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Lock className="w-4 h-4" />
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-1 py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-sm font-semibold rounded-2xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>กำลังเข้าสู่ระบบ...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>เข้าสู่ระบบ</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* MODE 2: REGISTER FORM */}
+            {authMode === 'register' && (
+              <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+                {/* Role Picker */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    ประเภทผู้ใช้งาน
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRegRole('student')}
+                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+                        regRole === 'student'
+                          ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400/40'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      <span>นักเรียน (Student)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegRole('counselor')}
+                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer ${
+                        regRole === 'counselor'
+                          ? 'bg-sky-500/20 border-sky-400 text-sky-300 ring-1 ring-sky-400/40'
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>ครูแนะแนว (Counselor)</span>
+                    </button>
                   </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="กรอกรหัสผ่านของคุณ"
-                    className="w-full pl-10 pr-11 py-3 bg-white/5 border border-white/15 focus:border-emerald-400 focus:bg-white/10 rounded-2xl text-sm text-white placeholder-slate-500 outline-none transition duration-200"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white transition"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
                 </div>
-              </div>
 
-              {/* Remember Me */}
-              <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    ชื่อ-นามสกุล
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded bg-white/10 border-white/20 text-emerald-500 focus:ring-emerald-400 focus:ring-offset-0 focus:ring-1 cursor-pointer"
+                    type="text"
+                    required
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    placeholder="เช่น กิตติพงษ์ สุขสวัสดิ์"
+                    className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
                   />
-                  <span>จดจำการเข้าสู่ระบบ</span>
-                </label>
-                <span className="text-slate-500 text-[11px]">
-                  เข้าใช้งานด้วยบัญชีโรงเรียน
-                </span>
-              </div>
+                </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-2 py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-sm font-semibold rounded-2xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>กำลังเข้าสู่ระบบ...</span>
-                  </>
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    อีเมล (โรงเรียน หรือ ส่วนตัว)
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    placeholder="เช่น kittipong@school.ac.th"
+                    className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
+                  />
+                </div>
+
+                {/* Role Specific Fields */}
+                {regRole === 'student' ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        รหัสนักเรียน (ถ้ามี)
+                      </label>
+                      <input
+                        type="text"
+                        value={regStudentCode}
+                        onChange={(e) => setRegStudentCode(e.target.value)}
+                        placeholder="เช่น #006 หรือ 12345"
+                        className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        ระดับชั้น / ห้อง
+                      </label>
+                      <select
+                        value={regClass}
+                        onChange={(e) => setRegClass(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-slate-800 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white outline-none"
+                      >
+                        <option value="M.5/1">ม.5/1</option>
+                        <option value="M.5/2">ม.5/2</option>
+                        <option value="M.6/1">ม.6/1</option>
+                        <option value="M.6/2">ม.6/2</option>
+                        <option value="M.4/1">ม.4/1</option>
+                      </select>
+                    </div>
+                  </div>
                 ) : (
-                  <>
-                    <span>เข้าสู่ระบบ</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        กลุ่มสาระ / หน่วยงาน
+                      </label>
+                      <input
+                        type="text"
+                        value={regDepartment}
+                        onChange={(e) => setRegDepartment(e.target.value)}
+                        placeholder="งานแนะแนว"
+                        className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-300 mb-1">
+                        เบอร์โทรศัพท์ติดต่อ
+                      </label>
+                      <input
+                        type="text"
+                        value={regPhone}
+                        onChange={(e) => setRegPhone(e.target.value)}
+                        placeholder="081-xxx-xxxx"
+                        className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
+                      />
+                    </div>
+                  </div>
                 )}
-              </button>
-            </form>
+
+                {/* Password Fields */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      รหัสผ่าน (6+ ตัวอักษร)
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      ยืนยันรหัสผ่าน
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={regConfirmPassword}
+                      onChange={(e) => setRegConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-2 py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-sm font-semibold rounded-2xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 active:scale-[0.99] transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>กำลังลงทะเบียน...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>ยืนยันการลงทะเบียน</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
 
             {/* Divider */}
             <div className="relative my-5">
@@ -304,7 +573,7 @@ export function LoginPage({ onOpenDemoModal }) {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-slate-900 px-3 text-slate-400 font-medium">
-                  หรือเข้าสู่ระบบด้วย
+                  หรือ
                 </span>
               </div>
             </div>

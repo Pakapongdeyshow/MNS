@@ -46,6 +46,22 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function register(userData) {
+    setError(null);
+    try {
+      setLoading(true);
+      const data = await api.register(userData);
+      localStorage.setItem('mns_token', data.token);
+      setUser(data.user);
+      return data.user;
+    } catch (err) {
+      setError(err.message || 'การลงทะเบียนล้มเหลว');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function quickDemoLogin(identifier, password) {
     try {
       setLoading(true);
@@ -85,7 +101,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, loginWithGoogle, logout, quickDemoLogin, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, loginWithGoogle, logout, quickDemoLogin, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );
