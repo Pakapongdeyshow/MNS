@@ -27,33 +27,41 @@ export function saveDatabase() {
   }
 }
 
+function getWasmBinary() {
+  const candidates = [];
+  try {
+    const sqlJsPath = require.resolve('sql.js');
+    candidates.push(path.join(path.dirname(sqlJsPath), 'sql-wasm.wasm'));
+    candidates.push(path.join(path.dirname(sqlJsPath), 'dist', 'sql-wasm.wasm'));
+  } catch (e) {}
+
+  candidates.push(
+    path.resolve(__dirname, '../../node_modules/sql.js/dist/sql-wasm.wasm'),
+    path.resolve(__dirname, '../../../node_modules/sql.js/dist/sql-wasm.wasm'),
+    path.resolve(process.cwd(), 'node_modules/sql.js/dist/sql-wasm.wasm'),
+    path.resolve(process.cwd(), 'server/node_modules/sql.js/dist/sql-wasm.wasm'),
+    '/var/task/node_modules/sql.js/dist/sql-wasm.wasm',
+    '/var/task/server/node_modules/sql.js/dist/sql-wasm.wasm'
+  );
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      try {
+        return fs.readFileSync(p);
+      } catch (err) {
+        // ignore
+      }
+    }
+  }
+  return null;
+}
+
 // Initialize database instance
 export async function getDb() {
   if (rawDb) return dbWrapper;
 
-  const SQL = await initSqlJs({
-    locateFile: (file) => {
-      try {
-        const resolved = require.resolve(`sql.js/dist/${file}`);
-        if (fs.existsSync(resolved)) return resolved;
-      } catch (e) {
-        // continue to candidates
-      }
-
-      const candidates = [
-        path.resolve(__dirname, `../../node_modules/sql.js/dist/${file}`),
-        path.resolve(__dirname, `../../../node_modules/sql.js/dist/${file}`),
-        path.resolve(process.cwd(), `node_modules/sql.js/dist/${file}`),
-        path.resolve(process.cwd(), `server/node_modules/sql.js/dist/${file}`),
-        `/var/task/node_modules/sql.js/dist/${file}`,
-        `/var/task/server/node_modules/sql.js/dist/${file}`
-      ];
-      for (const p of candidates) {
-        if (fs.existsSync(p)) return p;
-      }
-      return file;
-    }
-  });
+  const wasmBinary = getWasmBinary();
+  const SQL = wasmBinary ? await initSqlJs({ wasmBinary }) : await initSqlJs();
 
   if (fs.existsSync(dbPath)) {
     try {
