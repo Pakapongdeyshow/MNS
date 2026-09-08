@@ -295,4 +295,78 @@ router.get('/system-mode', async (req, res) => {
   }
 });
 
+// Update user profile (Name, Class Name, Student Code, Password, etc.)
+router.patch('/profile', authenticateToken, async (req, res) => {
+  try {
+    const { name, class_name, student_code, department, phone, password } = req.body;
+    const userId = req.user.id;
+
+    const userUpdates = {};
+    if (name && name.trim()) {
+      userUpdates.name = name.trim();
+    }
+    if (password && password.trim()) {
+      if (password.trim().length < 6) {
+        return res.status(400).json({ error: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' });
+      }
+      userUpdates.password = bcrypt.hashSync(password.trim(), 10);
+    }
+
+    if (Object.keys(userUpdates).length > 0) {
+      await db.updateUser(userId, userUpdates);
+    }
+
+    if (req.user.role === 'student') {
+      const studentUpdates = {};
+      if (class_name !== undefined) studentUpdates.className = class_name;
+      if (student_code !== undefined) studentUpdates.studentCode = student_code;
+      if (Object.keys(studentUpdates).length > 0) {
+        await db.updateStudentProfile(userId, studentUpdates);
+      }
+    } else if (req.user.role === 'counselor') {
+      const counselorUpdates = {};
+      if (name) counselorUpdates.name = name;
+      if (department) counselorUpdates.department = department;
+      if (phone !== undefined) counselorUpdates.phone = phone;
+      if (Object.keys(counselorUpdates).length > 0) {
+        await db.updateCounselorProfile(userId, counselorUpdates);
+      }
+    }
+
+    // Fetch updated user & relation
+    const updatedUser = await db.getUserById(userId);
+    let studentInfo = null;
+    let counselorInfo = null;
+
+    if (updatedUser.role === 'student') {
+      studentInfo = await db.getStudentByUserId(userId);
+    } else if (updatedUser.role === 'counselor') {
+      counselorInfo = await db.getCounselorByUserId(userId);
+    }
+
+    const payload = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      role: updatedUser.role,
+      student_id: studentInfo?.id || null,
+      student_code: studentInfo?.student_code || null,
+      class_name: studentInfo?.class_name || null,
+      counselor_id: counselorInfo?.id || null,
+      avatar: studentInfo?.avatar || null
+    };
+
+    const token = generateToken(payload);
+
+    res.json({
+      message: 'อัปเดตข้อมูลส่วนตัวสำเร็จ ✨',
+      token,
+      user: payload
+    });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล', details: err.message });
+  }
+});
+
 export default router;

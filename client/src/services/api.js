@@ -57,6 +57,10 @@ export const api = {
     body: JSON.stringify(credentialData)
   }),
   getMe: () => request('/auth/me'),
+  updateProfile: (profileData) => request('/auth/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(profileData)
+  }),
   getSystemMode: () => request('/auth/system-mode'),
   seedDemoMode: () => request('/auth/demo-seed', { method: 'POST' }),
   resetCleanMode: () => request('/auth/clean-reset', { method: 'POST' }),

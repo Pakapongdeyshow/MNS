@@ -1,0 +1,340 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { 
+  X, 
+  User, 
+  BookOpen, 
+  Lock, 
+  Mail, 
+  GraduationCap, 
+  Building, 
+  Phone, 
+  Check, 
+  AlertCircle, 
+  Eye, 
+  EyeOff,
+  Sparkles,
+  ShieldCheck
+} from 'lucide-react';
+
+export function ProfileSettingsModal({ isOpen, onClose }) {
+  const { user, updateProfile } = useAuth();
+
+  const [name, setName] = useState('');
+  const [className, setClassName] = useState('');
+  const [studentCode, setStudentCode] = useState('');
+  const [department, setDepartment] = useState('');
+  const [phone, setPhone] = useState('');
+
+  // Password fields
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Status state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
+
+  useEffect(() => {
+    if (user && isOpen) {
+      setName(user.name || '');
+      setClassName(user.class_name || '');
+      setStudentCode(user.student_code || '');
+      setDepartment(user.department || 'งานแนะแนวและจิตวิทยาการศึกษา');
+      setPhone(user.phone || '');
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsChangingPassword(false);
+      setError(null);
+      setSuccessMsg(null);
+    }
+  }, [user, isOpen]);
+
+  if (!isOpen) return null;
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    setSuccessMsg(null);
+
+    if (!name.trim()) {
+      setError('กรุณาระบุชื่อ-นามสกุล');
+      return;
+    }
+
+    if (isChangingPassword && newPassword) {
+      if (newPassword.length < 6) {
+        setError('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setError('รหัสผ่านยืนยันไม่ตรงกัน');
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        name: name.trim(),
+        class_name: className.trim(),
+        student_code: studentCode.trim(),
+        department: department.trim(),
+        phone: phone.trim(),
+      };
+
+      if (isChangingPassword && newPassword) {
+        payload.password = newPassword.trim();
+      }
+
+      await updateProfile(payload);
+      setSuccessMsg('บันทึกการเปลี่ยนแปลงข้อมูลสำเร็จเรียบร้อย! ✨');
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsChangingPassword(false);
+      setTimeout(() => {
+        setSuccessMsg(null);
+      }, 3000);
+    } catch (err) {
+      setError(err.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div 
+        className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="relative px-6 pt-6 pb-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl font-bold shadow-inner border border-white/30">
+              {name ? name.charAt(0) : 'U'}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold flex items-center gap-1.5">
+                ตั้งค่าข้อมูลส่วนตัว
+                <Sparkles className="w-4 h-4 text-emerald-200" />
+              </h3>
+              <p className="text-xs text-emerald-100 opacity-90">
+                {user?.role === 'student' ? 'บัญชีนักเรียน' : 'บัญชีครูแนะแนว / บุคลากร'} • {user?.email}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Modal Body / Form */}
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
+          {/* Alerts */}
+          {error && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-rose-700 text-xs animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5 text-emerald-800 text-xs font-medium animate-in fade-in">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {/* Full Name */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+              <User className="w-3.5 h-3.5 text-emerald-600" />
+              ชื่อ - นามสกุล
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm font-medium text-slate-800 outline-none transition"
+              placeholder="เช่น นายกฤตกานต์ สังข์ชุม"
+            />
+          </div>
+
+          {/* Student Specific Fields */}
+          {user?.role === 'student' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Class Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+                  ระดับชั้น / ห้องเรียน
+                </label>
+                <input
+                  type="text"
+                  value={className}
+                  onChange={(e) => setClassName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm font-medium text-slate-800 outline-none transition"
+                  placeholder="เช่น ม.6/3 หรือ ม.5/1"
+                />
+              </div>
+
+              {/* Student Code */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+                  รหัสนักเรียน / โค้ด
+                </label>
+                <input
+                  type="text"
+                  value={studentCode}
+                  onChange={(e) => setStudentCode(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm font-mono font-medium text-slate-800 outline-none transition"
+                  placeholder="เช่น #34164"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Counselor Specific Fields */}
+          {user?.role === 'counselor' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <Building className="w-3.5 h-3.5 text-emerald-600" />
+                  กลุ่มสาระ / หน่วยงาน
+                </label>
+                <input
+                  type="text"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm font-medium text-slate-800 outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                  เบอร์โทรศัพท์ติดต่อ
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm font-medium text-slate-800 outline-none transition"
+                  placeholder="08X-XXX-XXXX"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Email (Read Only) */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1">
+              <Mail className="w-3.5 h-3.5 text-slate-400" />
+              อีเมลบัญชี (เชื่อมโยงในระบบ)
+            </label>
+            <div className="w-full px-4 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-mono text-slate-500 select-none flex items-center justify-between">
+              <span>{user?.email}</span>
+              <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-sans">
+                Verified
+              </span>
+            </div>
+          </div>
+
+          {/* Change Password Toggle */}
+          <div className="pt-2 border-t border-slate-100">
+            {!isChangingPassword ? (
+              <button
+                type="button"
+                onClick={() => setIsChangingPassword(true)}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 py-1 transition cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                <span>เปลี่ยนรหัสผ่านใหม่ (Change Password)</span>
+              </button>
+            ) : (
+              <div className="space-y-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200 animate-in fade-in duration-150">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    ตั้งรหัสผ่านใหม่
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsChangingPassword(false);
+                      setNewPassword('');
+                      setConfirmPassword('');
+                    }}
+                    className="text-[11px] text-slate-500 hover:text-slate-800 cursor-pointer"
+                  >
+                    ยกเลิกเปลี่ยนรหัส
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"
+                    className="w-full px-4 py-2 rounded-xl bg-white border border-slate-200 focus:border-emerald-500 text-xs text-slate-800 outline-none pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                <div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="ยืนยันรหัสผ่านใหม่อีกครั้ง"
+                    className="w-full px-4 py-2 rounded-xl bg-white border border-slate-200 focus:border-emerald-500 text-xs text-slate-800 outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+            >
+              ปิดหน้าต่าง
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm hover:shadow transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {loading ? (
+                <span>กำลังบันทึก...</span>
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>บันทึกข้อมูล</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

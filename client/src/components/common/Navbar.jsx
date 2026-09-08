@@ -13,14 +13,17 @@ import {
   LifeBuoy, 
   FileText, 
   User as UserIcon,
-  ChevronDown
+  ChevronDown,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { EmergencyModal } from './EmergencyModal';
+import { ProfileSettingsModal } from './ProfileSettingsModal';
 
 export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
   const { user, logout } = useAuth();
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
@@ -29,7 +32,7 @@ export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
       case 'student':
         return (
           <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
-            {user?.student_code ? `${user.student_code} • ม.5/1` : 'นักเรียน'}
+            {user?.student_code ? `${user.student_code} • ${user?.class_name || 'ม.5/1'}` : (user?.class_name || 'นักเรียน')}
           </span>
         );
       case 'counselor':
@@ -51,139 +54,163 @@ export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
+            
             {/* Brand Logo */}
-            <div 
-              className="flex items-center gap-3 cursor-pointer select-none" 
-              onClick={() => setActiveTab(user?.role === 'student' ? 'garden' : 'dashboard')}
-            >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-                <span className="text-xl">🌱</span>
-              </div>
-              <div>
-                <div className="font-bold text-slate-900 text-base sm:text-lg tracking-tight flex items-center gap-1.5">
-                  MindNote <span className="text-emerald-700 font-semibold text-xs sm:text-sm px-1.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-200">MNS</span>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setActiveTab(user?.role === 'student' ? 'garden' : 'dashboard')}
+                className="flex items-center gap-2.5 group text-left cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 p-0.5 shadow-md group-hover:scale-105 transition duration-200 flex items-center justify-center text-white">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
                 </div>
-                <div className="text-[10px] text-slate-400 hidden sm:block">
-                  ระบบดูแลและให้คำปรึกษาสุขภาพจิตนักเรียน
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg font-black tracking-tight bg-gradient-to-r from-emerald-800 to-teal-700 bg-clip-text text-transparent">
+                      MindNote
+                    </span>
+                    <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-md uppercase tracking-wider border border-emerald-200/60">
+                      MNS
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium hidden sm:block">
+                    ระบบดูแลและให้คำปรึกษาสุขภาพจิตนักเรียน
+                  </p>
                 </div>
-              </div>
+              </button>
             </div>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1">
+            {/* Desktop Navigation Tabs */}
+            <nav className="hidden lg:flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60">
+              {/* Student Navigation */}
               {user?.role === 'student' && (
                 <>
                   <button
                     onClick={() => setActiveTab('garden')}
-                    className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
-                      activeTab === 'garden' || activeTab === 'home'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      activeTab === 'garden'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    🌱 Mind Garden
+                    <span>🌱 Mind Garden</span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('history')}
-                    className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       activeTab === 'history'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    📈 Mood Journey
+                    <span>📈 Mood Journey</span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('appointments')}
-                    className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       activeTab === 'appointments'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    📅 การนัดหมาย
+                    <span>📅 การนัดหมาย</span>
                   </button>
                 </>
               )}
 
+              {/* Counselor & Admin Navigation */}
               {(user?.role === 'counselor' || user?.role === 'admin') && (
                 <>
                   <button
                     onClick={() => setActiveTab('dashboard')}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
-                      activeTab === 'dashboard' || activeTab === 'home'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      activeTab === 'dashboard'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    📊 แดชบอร์ด
+                    <span>📊 ภาพรวม</span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('students')}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       activeTab === 'students'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    👥 ค้นหานักเรียน
+                    <Users className="w-3.5 h-3.5" />
+                    <span>รายชื่อนักเรียน</span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('referrals')}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       activeTab === 'referrals'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    🤝 เคสส่งต่อ
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>เคสส่งต่อ</span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('followups')}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       activeTab === 'followups'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    🔔 ติดตามผล
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    <span>ติดตามผล</span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('appointments')}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       activeTab === 'appointments'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    📅 นัดหมาย
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>ปฏิทินนัดหมาย</span>
                   </button>
+
                   <button
                     onClick={() => setActiveTab('report')}
-                    className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                       activeTab === 'report'
-                        ? 'bg-emerald-100 text-emerald-900 font-bold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-white text-emerald-800 shadow-xs border border-slate-200/60'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                     }`}
                   >
-                    📑 รายงานสถิติ
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>รายงานสถิติ</span>
                   </button>
                 </>
               )}
 
+              {/* Admin Special Tab */}
               {user?.role === 'admin' && (
                 <button
                   onClick={() => setActiveTab('admin')}
-                  className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition cursor-pointer ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                     activeTab === 'admin'
-                      ? 'bg-purple-100 text-purple-900 font-bold shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-purple-700 text-white shadow-xs'
+                      : 'text-purple-700 hover:bg-purple-100/60'
                   }`}
                 >
-                  👑 จัดการระบบ
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>จัดการระบบ</span>
                 </button>
               )}
             </nav>
@@ -229,6 +256,15 @@ export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
                       <p className="text-[11px] text-slate-500 font-mono truncate">{user?.email}</p>
                     </div>
 
+                    {/* Profile Settings Option */}
+                    <button
+                      onClick={() => setShowProfileModal(true)}
+                      className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 flex items-center gap-2 transition cursor-pointer font-medium"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>ตั้งค่าข้อมูลส่วนตัว (ชื่อ / ห้อง)</span>
+                    </button>
+
                     <button
                       onClick={onOpenDemoModal}
                       className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 flex items-center gap-2 transition cursor-pointer"
@@ -269,6 +305,14 @@ export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
               </div>
               {getRoleBadge(user?.role)}
             </div>
+
+            <button
+              onClick={() => { setShowProfileModal(true); setMobileMenuOpen(false); }}
+              className="w-full text-left px-3 py-2 rounded-xl text-sm font-medium text-emerald-700 hover:bg-emerald-50 flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4 text-emerald-600" />
+              <span>⚙️ ตั้งค่าข้อมูลส่วนตัว (ชื่อ / ห้อง)</span>
+            </button>
 
             {user?.role === 'student' && (
               <>
@@ -355,6 +399,12 @@ export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
           </div>
         )}
       </header>
+
+      {/* Profile Settings Modal */}
+      <ProfileSettingsModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
 
       {/* Emergency SOS Modal */}
       <EmergencyModal

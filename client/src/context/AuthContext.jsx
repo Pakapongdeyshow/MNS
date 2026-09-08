@@ -23,13 +23,28 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       const data = await api.getMe();
-      setUser(data.user);
+      setUser(data.user || data);
     } catch (err) {
       console.warn('Session expired or invalid, clearing token');
       localStorage.removeItem('mns_token');
       setUser(null);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function updateProfile(profileData) {
+    setError(null);
+    try {
+      const data = await api.updateProfile(profileData);
+      if (data.token) {
+        localStorage.setItem('mns_token', data.token);
+      }
+      setUser(data.user);
+      return data.user;
+    } catch (err) {
+      setError(err.message || 'การอัปเดตข้อมูลล้มเหลว');
+      throw err;
     }
   }
 
@@ -101,7 +116,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, loginWithGoogle, logout, quickDemoLogin, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, updateProfile, loginWithGoogle, logout, quickDemoLogin, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

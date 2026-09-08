@@ -52,6 +52,52 @@ export const db = {
     return data;
   },
 
+  async updateUser(userId, { name, password }) {
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (password) updateData.password = password;
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateStudentProfile(userId, { className, studentCode }) {
+    const updateData = {};
+    if (className) updateData.class_name = className.trim();
+    if (studentCode) updateData.student_code = studentCode.trim();
+
+    const { data, error } = await supabase
+      .from('students')
+      .update(updateData)
+      .eq('user_id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateCounselorProfile(userId, { name, department, phone }) {
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (department) updateData.department = department.trim();
+    if (phone !== undefined) updateData.phone = phone.trim();
+
+    const { data, error } = await supabase
+      .from('counselors')
+      .update(updateData)
+      .eq('user_id', userId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
   async getAllUsers() {
     const { data, error } = await supabase
       .from('users')
