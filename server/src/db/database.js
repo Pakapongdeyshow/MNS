@@ -29,11 +29,31 @@ export function saveDatabase() {
 export async function getDb() {
   if (rawDb) return dbWrapper;
 
-  const SQL = await initSqlJs();
+  const SQL = await initSqlJs({
+    locateFile: (file) => {
+      const candidates = [
+        path.resolve(__dirname, `../../node_modules/sql.js/dist/${file}`),
+        path.resolve(__dirname, `../../../node_modules/sql.js/dist/${file}`),
+        path.resolve(process.cwd(), `node_modules/sql.js/dist/${file}`),
+        path.resolve(process.cwd(), `server/node_modules/sql.js/dist/${file}`),
+        `/var/task/node_modules/sql.js/dist/${file}`,
+        `/var/task/server/node_modules/sql.js/dist/${file}`
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) return p;
+      }
+      return file;
+    }
+  });
 
   if (fs.existsSync(dbPath)) {
-    const fileBuffer = fs.readFileSync(dbPath);
-    rawDb = new SQL.Database(fileBuffer);
+    try {
+      const fileBuffer = fs.readFileSync(dbPath);
+      rawDb = new SQL.Database(fileBuffer);
+    } catch (e) {
+      console.warn('Could not read existing db, creating fresh in-memory db:', e.message);
+      rawDb = new SQL.Database();
+    }
   } else {
     rawDb = new SQL.Database();
   }
@@ -259,6 +279,18 @@ export async function initDatabase() {
   `;
 
   db.exec(schema);
+  
+  // Auto-seed production baseline if database is fresh
+  try {
+    const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()?.count || 0;
+    if (userCount === 0) {
+      const { seedProductionBase } = await import('./seed.js');
+      await seedProductionBase();
+    }
+  } catch (seedErr) {
+    console.warn('Auto-seed notice:', seedErr.message);
+  }
+
   console.log('✅ SQLite Database schema initialized with Production extensions (Gratitude, Referrals, SOS)');
   return db;
 }

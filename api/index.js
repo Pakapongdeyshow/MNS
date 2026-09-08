@@ -25,8 +25,27 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Initialize database on serverless cold start
-await initDatabase();
+// Initialize database safely on serverless requests
+let dbInitPromise = null;
+function ensureDb() {
+  if (!dbInitPromise) {
+    dbInitPromise = initDatabase().catch((err) => {
+      console.error('Database initialization error:', err);
+      dbInitPromise = null;
+      throw err;
+    });
+  }
+  return dbInitPromise;
+}
+
+app.use(async (req, res, next) => {
+  try {
+    await ensureDb();
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Database service initialization failed', details: err.message });
+  }
+});
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
