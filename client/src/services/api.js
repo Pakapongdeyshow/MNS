@@ -13,10 +13,27 @@ export async function request(endpoint, options = {}) {
     headers,
   });
 
-  const data = await response.json().catch(() => ({}));
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (e) {
+    data = {};
+  }
 
   if (!response.ok) {
-    const error = new Error(data.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+    let errorMsg = data.error || data.message;
+    if (!errorMsg) {
+      if (response.status === 401) {
+        errorMsg = 'ชื่อผู้ใช้งาน รหัสนักเรียน หรือรหัสผ่านไม่ถูกต้อง';
+      } else if (response.status === 404) {
+        errorMsg = 'ไม่พบบริการ API ที่ร้องขอ (404)';
+      } else if (response.status >= 500) {
+        errorMsg = 'เซิร์ฟเวอร์ขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง';
+      } else {
+        errorMsg = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+      }
+    }
+    const error = new Error(errorMsg);
     error.status = response.status;
     error.data = data;
     throw error;

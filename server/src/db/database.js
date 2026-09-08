@@ -2,7 +2,9 @@ import initSqlJs from 'sql.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
+const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -31,6 +33,13 @@ export async function getDb() {
 
   const SQL = await initSqlJs({
     locateFile: (file) => {
+      try {
+        const resolved = require.resolve(`sql.js/dist/${file}`);
+        if (fs.existsSync(resolved)) return resolved;
+      } catch (e) {
+        // continue to candidates
+      }
+
       const candidates = [
         path.resolve(__dirname, `../../node_modules/sql.js/dist/${file}`),
         path.resolve(__dirname, `../../../node_modules/sql.js/dist/${file}`),

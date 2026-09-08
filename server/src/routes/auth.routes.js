@@ -246,12 +246,14 @@ router.post('/login', async (req, res) => {
     }
 
     if (!user) {
-      return res.status(401).json({ error: 'ชื่อผู้ใช้งาน รหัสนักเรียน หรือรหัสผ่านไม่ถูกต้อง' });
+      return res.status(401).json({ 
+        error: 'ไม่พบบัญชีนี้ในระบบ กรุณาตรวจสอบอีเมล/รหัส หรือคลิกแท็บ "ลงทะเบียนบัญชีใหม่"' 
+      });
     }
 
     const isMatch = bcrypt.compareSync(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+      return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง' });
     }
 
     // Attach student or counselor specific ID
