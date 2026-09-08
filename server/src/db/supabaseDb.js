@@ -37,18 +37,38 @@ export const db = {
     return this.getUserById(student.user_id);
   },
 
-  async createUser({ name, email, password, role }) {
+  async createUser({ name, email, password, role, confirm }) {
+    const insertData = {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      role
+    };
+    if (confirm !== undefined && confirm !== null) {
+      insertData.confirm = String(confirm);
+    }
+
     const { data, error } = await supabase
       .from('users')
-      .insert([{
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        role
-      }])
+      .insert([insertData])
       .select()
       .single();
-    if (error) throw error;
+
+    if (error) {
+      // If 'confirm' column doesn't exist yet on Supabase schema, insert without it
+      if (error.message?.includes('confirm') || error.code === 'PGRST204') {
+        const fallbackData = { ...insertData };
+        delete fallbackData.confirm;
+        const fallbackRes = await supabase
+          .from('users')
+          .insert([fallbackData])
+          .select()
+          .single();
+        if (fallbackRes.error) throw fallbackRes.error;
+        return fallbackRes.data;
+      }
+      throw error;
+    }
     return data;
   },
 

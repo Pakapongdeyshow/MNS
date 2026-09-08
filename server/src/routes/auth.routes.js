@@ -108,7 +108,7 @@ router.post('/google', async (req, res) => {
 // Real User Registration (Student & Counselor)
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role = 'student', student_code, class_name, department, phone } = req.body;
+    const { name, email, password, confirm, role = 'student', student_code, class_name, department, phone } = req.body;
     
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'กรุณากรอกชื่อ-นามสกุล, อีเมล และรหัสผ่านให้ครบถ้วน' });
@@ -134,7 +134,8 @@ router.post('/register', async (req, res) => {
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
-      role
+      role,
+      confirm: confirm || password
     });
 
     let studentInfo = null;

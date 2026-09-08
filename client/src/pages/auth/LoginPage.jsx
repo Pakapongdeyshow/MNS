@@ -100,6 +100,7 @@ export function LoginPage({ onOpenDemoModal }) {
         name: regName.trim(),
         email: regEmail.trim(),
         password: regPassword,
+        confirm: regConfirmPassword,
         role: regRole,
         student_code: regRole === 'student' ? regStudentCode.trim() : null,
         class_name: regRole === 'student' ? (regClass.trim() || 'ม.5/1') : null,
@@ -530,7 +531,7 @@ export function LoginPage({ onOpenDemoModal }) {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-300 mb-1">
-                      ยืนยันรหัสผ่าน
+                      ยืนยัน
                     </label>
                     <input
                       type="password"
