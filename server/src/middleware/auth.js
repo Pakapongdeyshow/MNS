@@ -48,9 +48,8 @@ export function requireRole(allowedRoles) {
   };
 }
 
-// Student security guard: ensures students can only access their own data
 export function enforceStudentOwnership(req, res, next) {
-  if (req.user.role === 'student') {
+  if (req.user && req.user.role === 'student') {
     const requestedStudentId = parseInt(req.params.studentId || req.query.studentId || req.body.studentId || req.params.id);
     if (requestedStudentId && req.user.student_id !== requestedStudentId) {
       return res.status(403).json({ error: 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลของนักเรียนท่านอื่น' });
@@ -58,3 +57,9 @@ export function enforceStudentOwnership(req, res, next) {
   }
   next();
 }
+
+export const requireCounselorOrAdmin = requireRole(['counselor', 'admin']);
+export const requireAdmin = requireRole(['admin']);
+export const requireCounselor = requireRole(['counselor']);
+
+

@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { initDatabase } from './db/database.js';
 import authRoutes from './routes/auth.routes.js';
 import moodRoutes from './routes/mood.routes.js';
 import studentRoutes from './routes/student.routes.js';
@@ -46,6 +45,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     name: 'MindNote Student (MNS) Production API',
     version: '2.0.0',
+    database: 'Supabase PostgreSQL Cloud',
     timestamp: new Date().toISOString()
   });
 });
@@ -61,18 +61,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์', details: err.message });
 });
 
-// Start Server
-async function start() {
-  try {
-    await initDatabase();
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 MindNote Student Server running at http://localhost:${PORT}`);
-      console.log(`📡 REST API available at http://localhost:${PORT}/api`);
-    });
-  } catch (err) {
-    console.error('Failed to initialize server:', err);
-    process.exit(1);
-  }
-}
-
-start();
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 MindNote Student Server running at http://localhost:${PORT}`);
+  console.log(`☁️ Connected to Supabase Cloud Database`);
+  console.log(`📡 REST API available at http://localhost:${PORT}/api`);
+});

@@ -2,11 +2,6 @@
   "version": 2,
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "client/dist",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "node_modules/sql.js/dist/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",

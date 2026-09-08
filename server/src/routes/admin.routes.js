@@ -1,94 +1,81 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import { getDb } from '../db/database.js';
-import { authenticateToken, requireRole } from '../middleware/auth.js';
-import { seedDatabase } from '../db/seed.js';
+import { db } from '../db/supabaseDb.js';
+import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes require Admin role
-router.use(authenticateToken, requireRole(['admin']));
-
-// 1. Get all system users
-router.get('/users', async (req, res) => {
+// 1. Get all users
+router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const db = await getDb();
-    const users = db.prepare(`
-      SELECT 
-        u.id,
-        u.email,
-        u.name,
-        u.role,
-        u.created_at,
-        s.id as student_id,
-        s.student_code,
-        s.class_name,
-        s.status as student_status,
-        c.id as counselor_id,
-        c.department
-      FROM users u
-      LEFT JOIN students s ON s.user_id = u.id
-      LEFT JOIN counselors c ON c.user_id = u.id
-      ORDER BY u.id ASC
-    `).all();
-
-    res.json({ users });
+    const users = await db.getAllUsers();
+    res.json({ total: users.length, users });
   } catch (err) {
-    console.error('List users error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงรายชื่อผู้ใช้งาน' });
+    console.error('Get admin users error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้' });
   }
 });
 
-// 2. Add Counselor
-router.post('/counselors', async (req, res) => {
+// 2. Create counselor
+router.post('/counselors', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { name, email, password, department, phone } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'กรุณากรอกชื่อ อีเมล และรหัสผ่าน' });
     }
 
-    const db = await getDb();
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
+    const existing = await db.getUserByEmail(email);
     if (existing) {
-      return res.status(400).json({ error: 'อีเมลนี้ถูกใช้งานแล้ว' });
+      return res.status(409).json({ error: 'อีเมลนี้ถูกใช้งานแล้ว' });
     }
 
-    const hash = bcrypt.hashSync(password, 10);
-    const u = db.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)').run(name.trim(), email.toLowerCase().trim(), hash, 'counselor');
-    const c = db.prepare('INSERT INTO counselors (user_id, name, department, phone) VALUES (?, ?, ?, ?)').run(u.lastInsertRowid, name.trim(), department || 'งานแนะแนวและจิตวิทยา', phone || '');
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(password, salt);
 
-    res.status(201).json({ message: 'เพิ่มครูแนะแนว/ผู้ให้คำปรึกษาสำเร็จ', counselor_id: c.lastInsertRowid });
+    const user = await db.createUser({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password: hash,
+      role: 'counselor'
+    });
+
+    const counselor = await db.createCounselor({
+      userId: user.id,
+      name: name.trim(),
+      department: department || 'งานแนะแนวและจิตวิทยา',
+      phone: phone || ''
+    });
+
+    res.status(201).json({
+      message: 'สร้างบัญชีครูแนะแนวสำเร็จ',
+      counselor: {
+        id: counselor.id,
+        user_id: user.id,
+        name: user.name,
+        email: user.email,
+        department: counselor.department,
+        phone: counselor.phone
+      }
+    });
   } catch (err) {
-    console.error('Add counselor error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเพิ่มผู้ให้คำปรึกษา' });
+    console.error('Create counselor error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการสร้างครูแนะแนว' });
   }
 });
 
-// 3. Reset Demo Seed Data
-router.post('/seed-reset', async (req, res) => {
-  try {
-    await seedDatabase();
-    res.json({ message: 'รีเซ็ตข้อมูลตัวอย่าง (Demo Seed Data) เรียบร้อยแล้ว' });
-  } catch (err) {
-    console.error('Seed reset error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการรีเซ็ตข้อมูล' });
-  }
-});
-
-// 4. Delete user
-router.delete('/users/:id', async (req, res) => {
+// 3. Delete user
+router.delete('/users/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
     if (userId === req.user.id) {
-      return res.status(400).json({ error: 'ไม่สามารถลบบัญชีของตนเองที่กำลังใช้งานอยู่ได้' });
+      return res.status(400).json({ error: 'ไม่สามารถลบบัญชีของตัวเองได้' });
     }
 
-    const db = await getDb();
-    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
-    res.json({ message: 'ลบผู้ใช้งานเรียบร้อยแล้ว' });
+    await db.deleteUser(userId);
+    res.json({ message: 'ลบผู้ใช้สำเร็จ' });
   } catch (err) {
     console.error('Delete user error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการลบผู้ใช้งาน' });
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการลบผู้ใช้' });
   }
 });
 

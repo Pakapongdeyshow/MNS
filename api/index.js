@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { initDatabase } from '../server/src/db/database.js';
 import authRoutes from '../server/src/routes/auth.routes.js';
 import moodRoutes from '../server/src/routes/mood.routes.js';
 import studentRoutes from '../server/src/routes/student.routes.js';
@@ -25,28 +24,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Initialize database safely on serverless requests
-let dbInitPromise = null;
-function ensureDb() {
-  if (!dbInitPromise) {
-    dbInitPromise = initDatabase().catch((err) => {
-      console.error('Database initialization error:', err);
-      dbInitPromise = null;
-      throw err;
-    });
-  }
-  return dbInitPromise;
-}
-
-app.use(async (req, res, next) => {
-  try {
-    await ensureDb();
-    next();
-  } catch (err) {
-    res.status(500).json({ error: 'Database service initialization failed', details: err.message });
-  }
-});
-
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/mood', moodRoutes);
@@ -65,6 +42,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     name: 'MindNote Student (MNS) Production API on Vercel',
     version: '2.0.0',
+    database: 'Supabase PostgreSQL Cloud',
     environment: 'Vercel Serverless',
     timestamp: new Date().toISOString()
   });

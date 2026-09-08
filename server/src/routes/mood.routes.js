@@ -1,20 +1,18 @@
 import express from 'express';
-import { getDb } from '../db/database.js';
+import { db } from '../db/supabaseDb.js';
 import { authenticateToken, enforceStudentOwnership } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Helper to calculate tree growth level from total checkins
 export function calculateGrowthLevel(totalCheckins) {
-  if (totalCheckins >= 30) return 5; // Mature Tree
-  if (totalCheckins >= 14) return 4; // Growing Tree
-  if (totalCheckins >= 7) return 3;  // Small Tree
-  if (totalCheckins >= 3) return 2;  // Young Plant
-  if (totalCheckins >= 1) return 1;  // Sprout
-  return 0; // Seed
+  if (totalCheckins >= 30) return 5;
+  if (totalCheckins >= 14) return 4;
+  if (totalCheckins >= 7) return 3;
+  if (totalCheckins >= 3) return 2;
+  if (totalCheckins >= 1) return 1;
+  return 0;
 }
 
-// Map mood to weather environment
 export function getMoodWeather(mood) {
   switch (mood) {
     case 'VERY_GOOD':
@@ -48,222 +46,143 @@ router.post('/checkin', authenticateToken, async (req, res) => {
     }
 
     const todayDate = date || new Date().toISOString().split('T')[0];
-    const db = await getDb();
 
-    // Check if already checked in today
-    const existing = db.prepare('SELECT * FROM mood_checkins WHERE student_id = ? AND checkin_date = ?').get(studentId, todayDate);
-    if (existing) {
-      return res.status(409).json({
-        error: 'วันนี้คุณเช็กอินแล้ว',
-        alreadyCheckedIn: true,
-        checkin: existing
-      });
-    }
-
-    // Insert new check-in
-    db.prepare(`
-      INSERT INTO mood_checkins (student_id, mood, note, checkin_date)
-      VALUES (?, ?, ?, ?)
-    `).run(studentId, mood, note || '', todayDate);
-
-    // Get or initialize tree_progress
-    let progress = db.prepare('SELECT * FROM tree_progress WHERE student_id = ?').get(studentId);
-    if (!progress) {
-      db.prepare(`
-        INSERT INTO tree_progress (student_id, growth_level, consecutive_checkins, total_checkins, longest_streak, last_checkin_date)
-        VALUES (?, 0, 0, 0, 0, NULL)
-      `).run(studentId);
-      progress = { growth_level: 0, consecutive_checkins: 0, total_checkins: 0, longest_streak: 0, last_checkin_date: null };
-    }
-
-    // Calculate streak
-    let newStreak = 1;
-    if (progress.last_checkin_date) {
-      const lastDate = new Date(progress.last_checkin_date);
-      const currDate = new Date(todayDate);
-      const diffTime = Math.abs(currDate - lastDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1) {
-        newStreak = (progress.consecutive_checkins || 0) + 1;
-      } else if (diffDays === 0) {
-        newStreak = progress.consecutive_checkins || 1;
-      } else {
-        // Streak resets to 1, but tree never dies or shrinks!
-        newStreak = 1;
-      }
-    }
-
-    const newTotal = (progress.total_checkins || 0) + 1;
-    const newGrowthLevel = calculateGrowthLevel(newTotal);
-    const newLongestStreak = Math.max(progress.longest_streak || 0, newStreak);
-
-    // Update tree_progress
-    db.prepare(`
-      UPDATE tree_progress
-      SET growth_level = ?, consecutive_checkins = ?, total_checkins = ?, longest_streak = ?, last_checkin_date = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE student_id = ?
-    `).run(newGrowthLevel, newStreak, newTotal, newLongestStreak, todayDate, studentId);
-
-    const weather = getMoodWeather(mood);
+    const result = await db.checkinMood(studentId, mood, note || '', todayDate);
 
     res.status(201).json({
-      message: 'เช็กอินอารมณ์เรียบร้อยแล้ว!',
-      checkin: {
-        student_id: studentId,
-        mood,
-        note,
-        checkin_date: todayDate,
-        created_at: new Date().toISOString()
-      },
-      treeProgress: {
-        growth_level: newGrowthLevel,
-        consecutive_checkins: newStreak,
-        total_checkins: newTotal,
-        longest_streak: newLongestStreak,
-        last_checkin_date: todayDate
-      },
-      weather,
-      growthUnlocked: newGrowthLevel > (progress.growth_level || 0)
+      message: 'บันทึกความรู้สึกสำเร็จ! ต้นไม้ของคุณได้รับการดูแล 🌱',
+      checkin: result.checkin,
+      progress: result.progress,
+      weather: getMoodWeather(mood)
     });
   } catch (err) {
     console.error('Mood checkin error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการบันทึกการเช็กอิน' });
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเช็กอิน', details: err.message });
   }
 });
 
-// 2. Today Check-in Status
+// 2. Today's Mood Check
 router.get('/today', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.role === 'student' ? req.user.student_id : req.query.student_id;
+    const studentId = req.user.role === 'student' 
+      ? req.user.student_id 
+      : (req.query.student_id ? parseInt(req.query.student_id) : null);
+
     if (!studentId) {
-      return res.status(400).json({ error: 'ไม่พบรหัสนักเรียน' });
+      return res.status(400).json({ error: 'ต้องระบุ student_id' });
     }
 
-    const todayDate = req.query.date || new Date().toISOString().split('T')[0];
-    const db = await getDb();
-
-    const todayCheckin = db.prepare('SELECT * FROM mood_checkins WHERE student_id = ? AND checkin_date = ?').get(studentId, todayDate);
-    const progress = db.prepare('SELECT * FROM tree_progress WHERE student_id = ?').get(studentId);
-
-    const latestMood = todayCheckin ? todayCheckin.mood : 'GOOD';
-    const weather = getMoodWeather(latestMood);
+    const todayDate = new Date().toISOString().split('T')[0];
+    const todayCheckin = await db.getTodayMood(studentId, todayDate);
+    const progress = await db.getTreeProgress(studentId);
 
     res.json({
-      checkedIn: !!todayCheckin,
-      todayCheckin: todayCheckin || null,
-      progress: progress || { growth_level: 0, consecutive_checkins: 0, total_checkins: 0, longest_streak: 0 },
-      weather
+      checkedInToday: !!todayCheckin,
+      todayMood: todayCheckin ? todayCheckin.mood : null,
+      checkin: todayCheckin,
+      progress,
+      weather: todayCheckin ? getMoodWeather(todayCheckin.mood) : getMoodWeather('GOOD')
     });
   } catch (err) {
-    console.error('Mood today error:', err);
+    console.error('Get today mood error:', err);
     res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลวันนี้' });
   }
 });
 
-// 3. Garden Environment Status
+// 3. Garden State
 router.get('/garden', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.role === 'student' ? req.user.student_id : req.query.student_id;
+    const studentId = req.user.role === 'student' 
+      ? req.user.student_id 
+      : (req.query.student_id ? parseInt(req.query.student_id) : null);
+
     if (!studentId) {
-      return res.status(400).json({ error: 'ไม่พบรหัสนักเรียน' });
+      return res.status(400).json({ error: 'ต้องระบุ student_id' });
     }
 
-    const db = await getDb();
-    const progress = db.prepare('SELECT * FROM tree_progress WHERE student_id = ?').get(studentId) || {
-      growth_level: 0,
-      consecutive_checkins: 0,
-      total_checkins: 0,
-      longest_streak: 0
-    };
-
-    const latestCheckin = db.prepare('SELECT * FROM mood_checkins WHERE student_id = ? ORDER BY checkin_date DESC, id DESC LIMIT 1').get(studentId);
-    const weather = getMoodWeather(latestCheckin?.mood || 'GOOD');
+    const progress = await db.getTreeProgress(studentId);
+    const history = await db.getMoodHistory(studentId, 1);
+    const latestCheckin = history[0] || null;
 
     res.json({
-      progress,
-      latestCheckin: latestCheckin || null,
-      weather
+      student_id: studentId,
+      growth_level: progress.growth_level || 0,
+      consecutive_checkins: progress.consecutive_checkins || 0,
+      total_checkins: progress.total_checkins || 0,
+      longest_streak: progress.longest_streak || 0,
+      last_checkin_date: progress.last_checkin_date,
+      currentWeather: latestCheckin ? getMoodWeather(latestCheckin.mood) : getMoodWeather('GOOD')
     });
   } catch (err) {
-    console.error('Garden error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูล Mind Garden' });
+    console.error('Get garden state error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงสถานะ Mind Garden' });
   }
 });
 
-// 4. Mood Journey History
-router.get('/history', authenticateToken, enforceStudentOwnership, async (req, res) => {
+// 4. Mood History
+router.get('/history', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.role === 'student' ? req.user.student_id : req.query.student_id;
+    const studentId = req.user.role === 'student' 
+      ? req.user.student_id 
+      : (req.query.student_id ? parseInt(req.query.student_id) : null);
+
     if (!studentId) {
-      return res.status(400).json({ error: 'ไม่พบรหัสนักเรียน' });
+      return res.status(400).json({ error: 'ต้องระบุ student_id' });
     }
 
     const limit = parseInt(req.query.limit) || 30;
-    const db = await getDb();
+    const history = await db.getMoodHistory(studentId, limit);
 
-    const history = db.prepare(`
-      SELECT id, mood, note, checkin_date, created_at
-      FROM mood_checkins
-      WHERE student_id = ?
-      ORDER BY checkin_date DESC, id DESC
-      LIMIT ?
-    `).all(studentId, limit);
-
-    res.json({ history });
+    res.json({
+      student_id: studentId,
+      records: history.map(r => ({
+        ...r,
+        weather: getMoodWeather(r.mood)
+      }))
+    });
   } catch (err) {
-    console.error('History error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงประวัติ Mood Journey' });
+    console.error('Get mood history error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงประวัติ Mood' });
   }
 });
 
-// 5. Mood Journey Trend (Non-clinical wording)
-router.get('/trend', authenticateToken, enforceStudentOwnership, async (req, res) => {
+// 5. Mood Trend
+router.get('/trend', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.role === 'student' ? req.user.student_id : req.query.student_id;
+    const studentId = req.user.role === 'student' 
+      ? req.user.student_id 
+      : (req.query.student_id ? parseInt(req.query.student_id) : null);
+
     if (!studentId) {
-      return res.status(400).json({ error: 'ไม่พบรหัสนักเรียน' });
+      return res.status(400).json({ error: 'ต้องระบุ student_id' });
     }
 
     const days = parseInt(req.query.days) || 14;
-    const db = await getDb();
+    const records = await db.getMoodTrend(studentId, days);
 
-    const records = db.prepare(`
-      SELECT mood, note, checkin_date
-      FROM mood_checkins
-      WHERE student_id = ?
-      ORDER BY checkin_date ASC
-      LIMIT ?
-    `).all(studentId, days);
-
-    // Distribution
-    const distribution = {
-      VERY_GOOD: 0,
-      GOOD: 0,
-      NEUTRAL: 0,
-      WORRIED: 0,
-      NOT_GOOD: 0,
-      TOTAL: records.length
+    const moodScoreMap = {
+      'VERY_GOOD': 5,
+      'GOOD': 4,
+      'NEUTRAL': 3,
+      'WORRIED': 2,
+      'NOT_GOOD': 1
     };
 
-    records.forEach(r => {
-      if (distribution[r.mood] !== undefined) {
-        distribution[r.mood]++;
-      }
-    });
-
-    const progress = db.prepare('SELECT * FROM tree_progress WHERE student_id = ?').get(studentId);
+    const trend = records.map(r => ({
+      date: r.checkin_date,
+      mood: r.mood,
+      score: moodScoreMap[r.mood] || 3,
+      note: r.note
+    }));
 
     res.json({
-      title: 'แนวโน้มการเช็กอิน (Mood Journey)',
-      periodDays: days,
-      records,
-      distribution,
-      progress: progress || { growth_level: 0, consecutive_checkins: 0, total_checkins: 0, longest_streak: 0 }
+      student_id: studentId,
+      days,
+      trend
     });
   } catch (err) {
-    console.error('Trend error:', err);
-    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลแนวโน้มการเช็กอิน' });
+    console.error('Get mood trend error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการคำนวณแนวโน้ม' });
   }
 });
 
