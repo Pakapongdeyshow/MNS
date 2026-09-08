@@ -67,10 +67,11 @@ export const db = {
     return data;
   },
 
-  async updateStudentProfile(userId, { className, studentCode }) {
+  async updateStudentProfile(userId, { className, studentCode, avatar }) {
     const updateData = {};
-    if (className) updateData.class_name = className.trim();
-    if (studentCode) updateData.student_code = studentCode.trim();
+    if (className !== undefined) updateData.class_name = className ? className.trim() : 'ม.5/1';
+    if (studentCode !== undefined) updateData.student_code = studentCode ? studentCode.trim() : '';
+    if (avatar !== undefined) updateData.avatar = avatar;
 
     const { data, error } = await supabase
       .from('students')
@@ -82,7 +83,7 @@ export const db = {
     return data;
   },
 
-  async updateCounselorProfile(userId, { name, department, phone }) {
+  async updateCounselorProfile(userId, { name, department, phone, avatar }) {
     const updateData = {};
     if (name) updateData.name = name.trim();
     if (department) updateData.department = department.trim();

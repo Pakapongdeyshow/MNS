@@ -239,8 +239,16 @@ export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
                     </div>
                     <div className="flex justify-end">{getRoleBadge(user?.role)}</div>
                   </div>
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    {user?.name?.charAt(0) || 'U'}
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden">
+                    {user?.avatar ? (
+                      user.avatar.startsWith('data:image/') || user.avatar.startsWith('http') ? (
+                        <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-base">{user.avatar}</span>
+                      )
+                    ) : (
+                      user?.name?.charAt(0) || 'U'
+                    )}
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
                 </button>

@@ -298,7 +298,7 @@ router.get('/system-mode', async (req, res) => {
 // Update user profile (Name, Class Name, Student Code, Password, etc.)
 router.patch('/profile', authenticateToken, async (req, res) => {
   try {
-    const { name, class_name, student_code, department, phone, password } = req.body;
+    const { name, class_name, student_code, department, phone, password, avatar } = req.body;
     const userId = req.user.id;
 
     const userUpdates = {};
@@ -320,6 +320,7 @@ router.patch('/profile', authenticateToken, async (req, res) => {
       const studentUpdates = {};
       if (class_name !== undefined) studentUpdates.className = class_name;
       if (student_code !== undefined) studentUpdates.studentCode = student_code;
+      if (avatar !== undefined) studentUpdates.avatar = avatar;
       if (Object.keys(studentUpdates).length > 0) {
         await db.updateStudentProfile(userId, studentUpdates);
       }
@@ -328,6 +329,7 @@ router.patch('/profile', authenticateToken, async (req, res) => {
       if (name) counselorUpdates.name = name;
       if (department) counselorUpdates.department = department;
       if (phone !== undefined) counselorUpdates.phone = phone;
+      if (avatar !== undefined) counselorUpdates.avatar = avatar;
       if (Object.keys(counselorUpdates).length > 0) {
         await db.updateCounselorProfile(userId, counselorUpdates);
       }
@@ -353,7 +355,7 @@ router.patch('/profile', authenticateToken, async (req, res) => {
       student_code: studentInfo?.student_code || null,
       class_name: studentInfo?.class_name || null,
       counselor_id: counselorInfo?.id || null,
-      avatar: studentInfo?.avatar || null
+      avatar: avatar !== undefined ? avatar : (studentInfo?.avatar || null)
     };
 
     const token = generateToken(payload);
