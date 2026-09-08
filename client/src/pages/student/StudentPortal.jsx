@@ -75,7 +75,7 @@ export function StudentPortal({ activeSubTab = 'garden', onTabChange }) {
   const currentMood = gardenData?.latestCheckin?.mood || 'GOOD';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-in fade-in">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in">
       {/* Student Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -84,7 +84,7 @@ export function StudentPortal({ activeSubTab = 'garden', onTabChange }) {
             <span>•</span>
             <span>{user?.student_code || '#001'} {user?.class_name ? `(ห้อง ${user?.class_name})` : ''}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
             สวัสดี, {user?.name} 🌱
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
@@ -97,17 +97,17 @@ export function StudentPortal({ activeSubTab = 'garden', onTabChange }) {
           {todayStatus?.checkedIn ? (
             <button
               onClick={() => setIsCheckinOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs sm:text-sm transition shadow-xs"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold text-xs sm:text-sm transition shadow-xs cursor-pointer"
             >
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>วันนี้เช็กอินแล้ว (ดูบันทึก)</span>
             </button>
           ) : (
             <button
               onClick={() => setIsCheckinOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-nature-600 to-emerald-600 hover:from-nature-700 hover:to-emerald-700 text-white font-bold text-sm shadow-lg shadow-nature-500/25 transition transform hover:scale-[1.02] active:scale-95 animate-pulse-subtle"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-nature-600 to-emerald-600 hover:from-nature-700 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-nature-500/25 transition transform hover:scale-[1.02] active:scale-95 animate-pulse-subtle cursor-pointer"
             >
-              <Sparkles className="w-4 h-4 text-yellow-300" />
+              <Sparkles className="w-4 h-4 text-yellow-300 shrink-0" />
               <span>เช็กอินอารมณ์วันนี้</span>
             </button>
           )}
@@ -115,40 +115,40 @@ export function StudentPortal({ activeSubTab = 'garden', onTabChange }) {
       </div>
 
       {/* Sub-Tabs Selector Pill */}
-      <div className="flex items-center gap-2 bg-white/80 p-1.5 rounded-2xl border border-slate-200/80 shadow-xs max-w-fit">
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 bg-white/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-xs w-full sm:w-auto sm:max-w-fit overflow-x-auto">
         <button
           onClick={() => handleTabSwitch('garden')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
             currentTab === 'garden'
               ? 'bg-nature-600 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <span>🌱 Mind Garden & เช็กอิน</span>
+          <span>🌱 Mind Garden</span>
         </button>
 
         <button
           onClick={() => handleTabSwitch('history')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
             currentTab === 'history'
               ? 'bg-nature-600 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <TrendingUp className="w-4 h-4" />
-          <span>Mood Journey & กราฟแนวโน้ม</span>
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>Mood Journey</span>
         </button>
 
         <button
           onClick={() => handleTabSwitch('appointments')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap ${
             currentTab === 'appointments'
               ? 'bg-nature-600 text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Calendar className="w-4 h-4" />
-          <span>การนัดหมาย & คำปรึกษา ({appointments.length})</span>
+          <Calendar className="w-3.5 h-3.5" />
+          <span>นัดหมาย ({appointments.length})</span>
         </button>
       </div>
 

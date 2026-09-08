@@ -406,6 +406,128 @@ export function Navbar({ activeTab, setActiveTab, onOpenDemoModal }) {
             </div>
           </div>
         )}
+        {/* Mobile & Tablet Bottom Navigation Bar (iOS / iPad / Android Native App Experience) */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 py-1.5 flex items-center justify-around safe-bottom">
+          {user?.role === 'student' && (
+            <>
+              <button
+                onClick={() => setActiveTab('garden')}
+                className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition cursor-pointer min-w-[56px] ${
+                  activeTab === 'garden' || activeTab === 'home'
+                    ? 'text-emerald-700 font-bold bg-emerald-50/80 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span className="text-lg">🌱</span>
+                <span className="text-[10px] tracking-tight">สวนใจ</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition cursor-pointer min-w-[56px] ${
+                  activeTab === 'history'
+                    ? 'text-emerald-700 font-bold bg-emerald-50/80 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span className="text-lg">📈</span>
+                <span className="text-[10px] tracking-tight">บันทึกใจ</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('appointments')}
+                className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition cursor-pointer min-w-[56px] ${
+                  activeTab === 'appointments'
+                    ? 'text-emerald-700 font-bold bg-emerald-50/80 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Calendar className="w-5 h-5 mb-0.5" />
+                <span className="text-[10px] tracking-tight">นัดหมาย</span>
+              </button>
+
+              <button
+                onClick={() => setShowEmergencyModal(true)}
+                className="flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-rose-600 transition cursor-pointer min-w-[56px] hover:bg-rose-50"
+              >
+                <LifeBuoy className="w-5 h-5 mb-0.5 animate-spin" style={{ animationDuration: '6s' }} />
+                <span className="text-[10px] font-bold tracking-tight">SOS</span>
+              </button>
+
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-slate-500 hover:text-slate-800 transition cursor-pointer min-w-[56px]"
+              >
+                <Settings className="w-5 h-5 mb-0.5" />
+                <span className="text-[10px] tracking-tight">โปรไฟล์</span>
+              </button>
+            </>
+          )}
+
+          {(user?.role === 'counselor' || user?.role === 'admin') && (
+            <>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl transition cursor-pointer min-w-[52px] ${
+                  activeTab === 'dashboard' || activeTab === 'home'
+                    ? 'text-emerald-700 font-bold bg-emerald-50/80 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span className="text-base">📊</span>
+                <span className="text-[10px] tracking-tight">ภาพรวม</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('students')}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl transition cursor-pointer min-w-[52px] ${
+                  activeTab === 'students' || activeTab === 'student-detail'
+                    ? 'text-emerald-700 font-bold bg-emerald-50/80 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Users className="w-4 h-4 mb-0.5" />
+                <span className="text-[10px] tracking-tight">นักเรียน</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('appointments')}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl transition cursor-pointer min-w-[52px] ${
+                  activeTab === 'appointments'
+                    ? 'text-emerald-700 font-bold bg-emerald-50/80 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Calendar className="w-4 h-4 mb-0.5" />
+                <span className="text-[10px] tracking-tight">นัดหมาย</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('followups')}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl transition cursor-pointer min-w-[52px] ${
+                  activeTab === 'followups'
+                    ? 'text-emerald-700 font-bold bg-emerald-50/80 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <CheckSquare className="w-4 h-4 mb-0.5" />
+                <span className="text-[10px] tracking-tight">ติดตามผล</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab(user?.role === 'admin' ? 'admin' : 'report')}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl transition cursor-pointer min-w-[52px] ${
+                  activeTab === 'report' || activeTab === 'admin' || activeTab === 'referrals'
+                    ? 'text-purple-700 font-bold bg-purple-50 scale-105'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {user?.role === 'admin' ? <Shield className="w-4 h-4 mb-0.5 text-purple-600" /> : <FileText className="w-4 h-4 mb-0.5 text-sky-600" />}
+                <span className="text-[10px] tracking-tight">{user?.role === 'admin' ? 'ระบบ' : 'สถิติ'}</span>
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Profile Settings Modal */}

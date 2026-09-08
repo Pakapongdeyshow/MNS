@@ -123,7 +123,7 @@ export function StudentProfileDetail({ studentId, initialTab = 'overview', onBac
   const growthLevel = student.growth_level ?? student.tree_progress?.growth_level ?? 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-in fade-in">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 pb-24 lg:pb-8 animate-in fade-in">
       {/* Back Button */}
       <button
         onClick={onBack}
