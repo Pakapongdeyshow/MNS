@@ -11,7 +11,7 @@ import {
   ShieldCheck, 
   HeartHandshake, 
   PhoneCall, 
-  CheckCircle2,
+  CheckCircle2, 
   AlertCircle,
   GraduationCap,
   UserCheck,
@@ -39,7 +39,7 @@ export function LoginPage({ onOpenDemoModal }) {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regRole, setRegRole] = useState('student');
   const [regStudentCode, setRegStudentCode] = useState('');
-  const [regClass, setRegClass] = useState('M.5/1');
+  const [regClass, setRegClass] = useState('');
   const [regDepartment, setRegDepartment] = useState('งานแนะแนวและจิตวิทยาการศึกษา');
   const [regPhone, setRegPhone] = useState('');
 
@@ -102,7 +102,7 @@ export function LoginPage({ onOpenDemoModal }) {
         password: regPassword,
         role: regRole,
         student_code: regRole === 'student' ? regStudentCode.trim() : null,
-        class_name: regRole === 'student' ? regClass : null,
+        class_name: regRole === 'student' ? (regClass.trim() || 'ม.5/1') : null,
         department: regRole === 'counselor' ? regDepartment.trim() : null,
         phone: regRole === 'counselor' ? regPhone.trim() : null,
       };
@@ -435,7 +435,7 @@ export function LoginPage({ onOpenDemoModal }) {
                     required
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
-                    placeholder="เช่น กิตติพงษ์ สุขสวัสดิ์"
+                    placeholder="เช่น กฤตภานต์ สังข์ชุม"
                     className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
                   />
                 </div>
@@ -450,7 +450,7 @@ export function LoginPage({ onOpenDemoModal }) {
                     required
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="เช่น kittipong@school.ac.th"
+                    placeholder="เช่น 34164@apw.ac.th"
                     className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
                   />
                 </div>
@@ -466,25 +466,22 @@ export function LoginPage({ onOpenDemoModal }) {
                         type="text"
                         value={regStudentCode}
                         onChange={(e) => setRegStudentCode(e.target.value)}
-                        placeholder="เช่น #006 หรือ 12345"
+                        placeholder="เช่น 34164 หรือ #001"
                         className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-300 mb-1">
-                        ระดับชั้น / ห้อง
+                        ระดับชั้น / ห้อง (พิมพ์เองได้)
                       </label>
-                      <select
+                      <input
+                        type="text"
+                        required
                         value={regClass}
                         onChange={(e) => setRegClass(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-slate-800 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white outline-none"
-                      >
-                        <option value="M.5/1">ม.5/1</option>
-                        <option value="M.5/2">ม.5/2</option>
-                        <option value="M.6/1">ม.6/1</option>
-                        <option value="M.6/2">ม.6/2</option>
-                        <option value="M.4/1">ม.4/1</option>
-                      </select>
+                        placeholder="เช่น ม.5/1 หรือ ม.6/4"
+                        className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 focus:border-emerald-400 rounded-xl text-sm text-white placeholder-slate-500 outline-none"
+                      />
                     </div>
                   </div>
                 ) : (
@@ -640,7 +637,7 @@ export function LoginPage({ onOpenDemoModal }) {
               </div>
               <button 
                 onClick={() => setShowGoogleModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
               >
                 ✕
               </button>
@@ -683,14 +680,14 @@ export function LoginPage({ onOpenDemoModal }) {
                 <button
                   type="button"
                   onClick={() => setShowGoogleModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-white/10"
+                  className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-bold shadow-md shadow-emerald-500/20"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-bold shadow-md shadow-emerald-500/20 cursor-pointer"
                 >
                   {loading ? 'กำลังเข้าสู่ระบบ...' : 'ยืนยันเข้าสู่ระบบ Google'}
                 </button>
