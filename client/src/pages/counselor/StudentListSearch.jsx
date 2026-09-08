@@ -133,7 +133,7 @@ export function StudentListSearch({ onSelectStudent }) {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-nature-100 to-emerald-50 border border-nature-200 flex items-center justify-center text-xl shadow-inner group-hover:scale-105 transition">
-                      {st.growth_level >= 5 ? '🌳' : st.growth_level >= 3 ? '🌳' : st.growth_level >= 1 ? '🌿' : '🌱'}
+                      {(st.growth_level || 0) >= 5 ? '🌳' : (st.growth_level || 0) >= 3 ? '🌳' : (st.growth_level || 0) >= 1 ? '🌿' : '🌱'}
                     </div>
                     <div>
                       <div className="font-bold text-base text-slate-900 group-hover:text-nature-900 transition">

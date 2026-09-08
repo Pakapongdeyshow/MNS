@@ -46,14 +46,32 @@ router.get('/:id', authenticateToken, async (req, res) => {
       db.getTreeProgress(studentId)
     ]);
 
-    res.json({
+    const studentObj = {
       ...student,
-      growth_level: treeProgress.growth_level || 0,
-      tree_progress: treeProgress,
+      growth_level: treeProgress?.growth_level || 0,
+      consecutive_checkins: treeProgress?.consecutive_checkins || 0,
+      longest_streak: treeProgress?.longest_streak || 0,
+      total_checkins: treeProgress?.total_checkins || 0,
+      tree_progress: treeProgress
+    };
+
+    const summaryObj = {
+      totalCounseling: counselingRecords.length,
+      lastCounselingDate: counselingRecords[0]?.date || null,
+      nextAppointment: appointments.find(a => a.status === 'SCHEDULED') || null,
+      pendingFollowupsCount: followups.filter(f => f.status === 'PENDING').length
+    };
+
+    res.json({
+      student: studentObj,
+      summary: summaryObj,
+      counselingRecords,
       counseling_records: counselingRecords,
       followups,
       appointments,
-      recent_moods: recentMoods
+      recentMoods,
+      recent_moods: recentMoods,
+      ...studentObj
     });
   } catch (err) {
     console.error('Get student detail error:', err);

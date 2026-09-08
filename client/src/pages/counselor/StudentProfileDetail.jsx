@@ -109,7 +109,18 @@ export function StudentProfileDetail({ studentId, initialTab = 'overview', onBac
     );
   }
 
-  const { student, summary, counselingRecords, followups, appointments, recentMoods } = data;
+  const student = data.student || data || {};
+  const summary = data.summary || {
+    totalCounseling: (data.counseling_records || data.counselingRecords || []).length,
+    lastCounselingDate: (data.counseling_records || data.counselingRecords)?.[0]?.date || null,
+    nextAppointment: (data.appointments || []).find(a => a.status === 'SCHEDULED') || null,
+    pendingFollowupsCount: (data.followups || []).filter(f => f.status === 'PENDING').length
+  };
+  const counselingRecords = data.counseling_records || data.counselingRecords || [];
+  const followups = data.followups || [];
+  const appointments = data.appointments || [];
+  const recentMoods = data.recent_moods || data.recentMoods || [];
+  const growthLevel = student.growth_level ?? student.tree_progress?.growth_level ?? 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-in fade-in">
@@ -127,19 +138,19 @@ export function StudentProfileDetail({ studentId, initialTab = 'overview', onBac
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-4">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-nature-200 via-emerald-100 to-sky-100 border border-nature-300 flex items-center justify-center text-3xl sm:text-4xl shadow-inner">
-              {student.growth_level >= 5 ? '🌳' : student.growth_level >= 3 ? '🌳' : student.growth_level >= 1 ? '🌿' : '🌱'}
+              {growthLevel >= 5 ? '🌳' : growthLevel >= 3 ? '🌳' : growthLevel >= 1 ? '🌿' : '🌱'}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-nature-100 text-nature-800">
-                  {student.student_code}
+                  {student.student_code || '#000'}
                 </span>
-                <span className="text-xs text-slate-500 font-medium">ห้อง {student.class_name}</span>
+                <span className="text-xs text-slate-500 font-medium">ห้อง {student.class_name || 'ม.5/1'}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-                {student.name}
+                {student.name || 'นักเรียน'}
               </h1>
-              <div className="text-xs text-slate-500 mt-0.5">{student.email}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{student.email || ''}</div>
             </div>
           </div>
 
@@ -229,19 +240,19 @@ export function StudentProfileDetail({ studentId, initialTab = 'overview', onBac
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="p-3 bg-nature-50 rounded-2xl">
                 <div className="text-xs text-slate-500">ระดับการเติบโต</div>
-                <div className="text-lg font-bold text-nature-800">Stage {student.growth_level}/5</div>
+                <div className="text-lg font-bold text-nature-800">Stage {growthLevel}/5</div>
               </div>
               <div className="p-3 bg-amber-50 rounded-2xl">
                 <div className="text-xs text-slate-500">เช็กอินต่อเนื่อง</div>
-                <div className="text-lg font-bold text-amber-800">{student.consecutive_checkins} วัน</div>
+                <div className="text-lg font-bold text-amber-800">{student.consecutive_checkins || 0} วัน</div>
               </div>
               <div className="p-3 bg-slate-50 rounded-2xl">
                 <div className="text-xs text-slate-500">สถิติสูงสุด</div>
-                <div className="text-lg font-bold text-slate-800">{student.longest_streak} วัน</div>
+                <div className="text-lg font-bold text-slate-800">{student.longest_streak || 0} วัน</div>
               </div>
               <div className="p-3 bg-emerald-50 rounded-2xl">
                 <div className="text-xs text-slate-500">เช็กอินสะสมทั้งหมด</div>
-                <div className="text-lg font-bold text-emerald-800">{student.total_checkins} วัน</div>
+                <div className="text-lg font-bold text-emerald-800">{student.total_checkins || 0} วัน</div>
               </div>
             </div>
           </div>
